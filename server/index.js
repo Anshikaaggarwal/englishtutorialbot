@@ -7,7 +7,6 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const connectDB = require("./config/db");
 const User = require("./models/userModel");
 const cors = require("cors");
-const { getLoginQuestions } = require("./llm/loginQuestions");
 const axios = require("axios");
 
 const app = express();
@@ -294,20 +293,6 @@ app.post("/api/llm/chat", async (req, res) => {
     });
   }
 });
-
-// AI-powered login / assessment questions (Gemini, JS-only)
-app.get("/api/assessment/questions", async (_req, res) => {
-  try {
-    const payload = await getLoginQuestions();
-    return res.json(payload);
-  } catch (error) {
-    console.error("AI login questions error:", error.message || error);
-    return res.status(500).json({
-      error: "Failed to generate assessment questions",
-    });
-  }
-});
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
