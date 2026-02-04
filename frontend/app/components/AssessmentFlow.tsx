@@ -1,24 +1,88 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { assessmentQuestions, calculateUserLevel } from '@/app/data/assessmentQuestions';
+import { assessmentQuestions as fallbackQuestions, calculateUserLevel, AssessmentQuestion } from '@/app/data/assessmentQuestions';
 import { Button } from '@/components/ui/button';
 
 interface AssessmentFlowProps {
   onComplete: () => void;
 }
 
+const API_BASE_URL = 'http://localhost:5000';
+
+// Function to get 5 random questions without repetition
+const getRandomQuestions = (allQuestions: AssessmentQuestion[], count: number = 5): AssessmentQuestion[] => {
+  const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+};
+
 export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete }) => {
-  const { user, setUserLevel, completeAssessment } = useAuth();
+  const { setUserLevel, completeAssessment } = useAuth();
+  const [questions, setQuestions] = useState<AssessmentQuestion[] | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const currentQuestion = assessmentQuestions[currentQuestionIndex];
-  const language = user?.name ? 'hindi' : 'english';
-  const isLastQuestion = currentQuestionIndex === assessmentQuestions.length - 1;
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/assessment/questions`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch AI questions');
+        }
+
+        const data = await response.json();
+
+        if (!data?.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
+          throw new Error('Invalid questions format from AI');
+        }
+
+        // Get 5 random questions from AI response
+        const randomQuestions = getRandomQuestions(data.questions, 5);
+        setQuestions(randomQuestions);
+      } catch (err) {
+        console.error('Assessment question fetch failed, using fallback:', err);
+        setError('Using default questions because AI generation failed.');
+        // Get 5 random questions from fallback
+        const randomQuestions = getRandomQuestions(fallbackQuestions, 5);
+        setQuestions(randomQuestions);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#ffd700] via-[#fff8dc] to-[#fffacd] p-4">
+        <div className="w-full max-w-md space-y-6 rounded-3xl bg-white p-8 shadow-2xl text-center">
+          <p className="text-lg font-semibold text-secondary">Preparing your AI-powered assessment...</p>
+          <p className="text-sm text-muted-foreground">This will help Gemini understand your English level.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#ffd700] via-[#fff8dc] to-[#fffacd] p-4">
+        <div className="w-full max-w-md space-y-6 rounded-3xl bg-white p-8 shadow-2xl text-center">
+          <p className="text-lg font-semibold text-secondary">Unable to load assessment questions.</p>
+          <p className="text-sm text-muted-foreground">Please try refreshing the page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   const handleSelectAnswer = (answerId: string) => {
     setSelectedAnswers({
@@ -40,15 +104,17 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete }) =>
     }
   };
 
+  const computeFinalScore = () => {
+    let totalScore = score;
+    const selectedAnswer = selectedAnswers[currentQuestion.id];
+    if (selectedAnswer === currentQuestion.correctAnswer) {
+      totalScore += currentQuestion.points;
+    }
+    return totalScore;
+  };
+
   const handleFinish = () => {
-    const finalScore = (() => {
-      let totalScore = score;
-      const selectedAnswer = selectedAnswers[currentQuestion.id];
-      if (selectedAnswer === currentQuestion.correctAnswer) {
-        totalScore += currentQuestion.points;
-      }
-      return totalScore;
-    })();
+    const finalScore = computeFinalScore();
 
     const userLevel = calculateUserLevel(finalScore);
     setUserLevel(userLevel);
@@ -57,14 +123,7 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete }) =>
   };
 
   if (showResults) {
-    const finalScore = (() => {
-      let totalScore = score;
-      const selectedAnswer = selectedAnswers[currentQuestion.id];
-      if (selectedAnswer === currentQuestion.correctAnswer) {
-        totalScore += currentQuestion.points;
-      }
-      return totalScore;
-    })();
+    const finalScore = computeFinalScore();
 
     const userLevel = calculateUserLevel(finalScore);
     const levelLabels: Record<string, string> = {
@@ -83,6 +142,11 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete }) =>
               <p className="text-lg font-medium text-foreground">Your Level:</p>
               <p className="text-2xl font-bold text-secondary">{levelLabels[userLevel]}</p>
             </div>
+            {error && (
+              <p className="text-xs text-muted-foreground">
+                {error}
+              </p>
+            )}
           </div>
 
           <Button
@@ -102,13 +166,13 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete }) =>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium text-muted-foreground">
-              Question {currentQuestionIndex + 1}/{assessmentQuestions.length}
+              Question {currentQuestionIndex + 1}/{questions.length}
             </h2>
             <div className="h-2 w-32 rounded-full bg-muted">
               <div
                 className="h-2 rounded-full bg-secondary transition-all duration-300"
                 style={{
-                  width: `${((currentQuestionIndex + 1) / assessmentQuestions.length) * 100}%`,
+                  width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
                 }}
               />
             </div>
