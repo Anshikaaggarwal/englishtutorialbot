@@ -6,6 +6,7 @@ import { Chatbot } from '@/app/components/Chatbot';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Search, History, Heart, BookOpen, Lightbulb, LogOut } from 'lucide-react';
 import { WordOfTheDay } from './WordOfTheDay';
+import { VocabularyList } from './VocabularyList';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -127,7 +128,7 @@ export const Dashboard: React.FC = () => {
 
           {/* Vocabulary List */}
           <div className="rounded-3xl bg-gradient-to-br from-[#20C997] to-[#13B981] p-8 text-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold">Vocabulary List</h3>
                 <BookOpen size={24} />
@@ -141,7 +142,8 @@ export const Dashboard: React.FC = () => {
               <button className="w-full rounded-xl bg-white/20 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
                 Explore All Words
               </button>
-            </div>
+            </div> */}
+            <VocabularyList />
           </div>
 
           {/* Practice Session */}

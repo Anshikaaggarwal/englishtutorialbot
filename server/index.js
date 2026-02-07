@@ -11,6 +11,7 @@ const axios = require("axios");
 const { translate } = require("@vitalets/google-translate-api");
 
 const app = express();
+const vocabularyRoutes = require('./routes/vocabulary');
 
 // Connect to MongoDB
 connectDB();
@@ -39,6 +40,7 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use('/api/vocabulary', vocabularyRoutes);
 
 // Google OAuth Strategy
 passport.use(
@@ -337,6 +339,9 @@ app.get("/api/word-of-the-day", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch Word of the Day" });
   }
 });
+
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
