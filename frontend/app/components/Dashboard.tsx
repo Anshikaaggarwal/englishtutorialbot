@@ -48,7 +48,7 @@ export const Dashboard: React.FC = () => {
   const content = getLevelContent();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf8f3] to-[#f0e9e0]">
+    <div className="min-h-screen bg-linear-to-br from-[#faf8f3] to-[#f0e9e0]">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-muted bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
