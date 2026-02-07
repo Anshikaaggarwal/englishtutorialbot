@@ -8,6 +8,7 @@ const connectDB = require("./config/db");
 const User = require("./models/userModel");
 const cors = require("cors");
 const axios = require("axios");
+const { translate } = require("@vitalets/google-translate-api");
 
 const app = express();
 
@@ -291,6 +292,45 @@ app.post("/api/llm/chat", async (req, res) => {
     return res.status(500).json({
       error: "Failed to connect to LLM service",
     });
+  }
+});
+
+// Word of the Day + Hindi Translation
+app.get("/api/word-of-the-day", async (req, res) => {
+  try {
+   
+    const apiRes = await axios.get("https://wordoftheday.freeapi.me/");
+    const data = apiRes.data;
+
+ 
+    const hindiMeaningResult = await translate(data.meaning, {
+      to: "hi",
+    });
+
+  
+    let hindiExampleText = "";
+    if (data.example) {
+      const hindiExampleResult = await translate(data.example, {
+        to: "hi",
+      });
+      hindiExampleText = hindiExampleResult.text;
+    }
+
+   
+    res.json({
+      word: data.word,
+      pronunciation: "",
+      meaning: data.meaning,
+      hindiMeaning: hindiMeaningResult.text,
+      partOfSpeech: data.partOfSpeech,
+      example: data.example || "",
+      hindiExample: hindiExampleText,
+      synonyms: [],
+      date: data.date,
+    });
+  } catch (error) {
+    console.error("Word of the Day error:", error.message || error);
+    res.status(500).json({ error: "Failed to fetch Word of the Day" });
   }
 });
 

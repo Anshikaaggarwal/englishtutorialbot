@@ -5,6 +5,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { Chatbot } from '@/app/components/Chatbot';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Search, History, Heart, BookOpen, Lightbulb, LogOut } from 'lucide-react';
+import { WordOfTheDay } from './WordOfTheDay';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -121,25 +122,8 @@ export const Dashboard: React.FC = () => {
 
         {/* Main Features Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Word of the Day */}
-          <div className="rounded-3xl bg-gradient-to-br from-[#A855F7] to-[#9333EA] p-8 text-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold">Word of the Day</h3>
-                <Lightbulb size={24} />
-              </div>
-              <div className="space-y-2">
-                <p className="text-3xl font-bold">Serendipity</p>
-                <p className="opacity-90">Finding something valuable by chance</p>
-                <p className="text-sm opacity-75">
-                  आकस्मिक रूप से कुछ मूल्यवान खोजना
-                </p>
-              </div>
-              <button className="w-full rounded-xl bg-white/20 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
-                Learn More
-              </button>
-            </div>
-          </div>
+          <WordOfTheDay />
+
 
           {/* Vocabulary List */}
           <div className="rounded-3xl bg-gradient-to-br from-[#20C997] to-[#13B981] p-8 text-white shadow-lg hover:shadow-xl transition-shadow">
