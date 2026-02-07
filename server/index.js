@@ -266,73 +266,39 @@ app.get("/", (req, res) => {
   res.send("English Tutorial Bot API is running");
 });
 
-// LLM chat proxy (Gemini via Python voice_chat.py)
 app.post("/api/llm/chat", async (req, res) => {
-  const { message, sessionId } = req.body || {};
+  const { message } = req.body;
 
   if (!message || typeof message !== "string") {
-    return res.status(400).json({ error: "Missing 'message' in request body" });
+    return res.status(200).json({
+      reply: "Please type a message so I can help 🙂",
+    });
   }
+
+  const sessionId =
+    req.user?._id?.toString() || req.sessionID || "guest";
 
   try {
     const response = await axios.post(
-      "http://localhost:8000/chat",
+      "http://127.0.0.1:8000/chat",   // ✅ IPv4 FIX
       {
         message,
-        session_id: sessionId || "default",
+        session_id: sessionId,
       },
-      {
-        timeout: 15000,
-      }
+      { timeout: 15000 }
     );
 
-    return res.json(response.data);
-  } catch (error) {
-    console.error("LLM chat error:", error.message || error);
-    return res.status(500).json({
-      error: "Failed to connect to LLM service",
+    return res.status(200).json({
+      reply: response.data?.reply || "Please try again 🙂",
+    });
+  } catch (err) {
+    console.error("LLM ERROR:", err.response?.data || err.message);
+    return res.status(200).json({
+      reply: "I’m having a little trouble right now, please try again 😊",
     });
   }
 });
 
-// Word of the Day + Hindi Translation
-app.get("/api/word-of-the-day", async (req, res) => {
-  try {
-   
-    const apiRes = await axios.get("https://wordoftheday.freeapi.me/");
-    const data = apiRes.data;
-
- 
-    const hindiMeaningResult = await translate(data.meaning, {
-      to: "hi",
-    });
-
-  
-    let hindiExampleText = "";
-    if (data.example) {
-      const hindiExampleResult = await translate(data.example, {
-        to: "hi",
-      });
-      hindiExampleText = hindiExampleResult.text;
-    }
-
-   
-    res.json({
-      word: data.word,
-      pronunciation: "",
-      meaning: data.meaning,
-      hindiMeaning: hindiMeaningResult.text,
-      partOfSpeech: data.partOfSpeech,
-      example: data.example || "",
-      hindiExample: hindiExampleText,
-      synonyms: [],
-      date: data.date,
-    });
-  } catch (error) {
-    console.error("Word of the Day error:", error.message || error);
-    res.status(500).json({ error: "Failed to fetch Word of the Day" });
-  }
-});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

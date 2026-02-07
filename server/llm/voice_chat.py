@@ -13,11 +13,11 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 # This loads server/.env
 load_dotenv()
 
-GOOGLE_CLOUD_API_KEY = os.getenv("GOOGLE_CLOUD_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-if not GOOGLE_CLOUD_API_KEY:
+if not GOOGLE_API_KEY:
     raise RuntimeError(
-        "GOOGLE_CLOUD_API_KEY is missing. Add it to server/.env"
+        "GOOGLE_API_KEY is missing. Add it to server/.env"
     )
 
 # ---------------- APP ----------------
@@ -26,7 +26,7 @@ app = FastAPI()
 # ---------------- LLM ----------------
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash",
-    google_api_key=GOOGLE_CLOUD_API_KEY,
+    google_api_key=GOOGLE_API_KEY,
     temperature=0.7,
 )
 
