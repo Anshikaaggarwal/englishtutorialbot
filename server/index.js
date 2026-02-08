@@ -52,7 +52,7 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
+        let user = await User.findOne({ email });
 
         if (!user) {
           user = await User.create({
@@ -62,6 +62,13 @@ passport.use(
             photo: profile.photos?.[0]?.value || "",
             loginMethod: "google",
           });
+        } else {
+          // 🔗 Existing user → just link Google account
+          if (!user.googleId) {
+            user.googleId = profile.id;
+            user.loginMethod = "google";
+            await user.save();
+          }
         }
 
         return done(null, user);
@@ -156,7 +163,7 @@ app.get(
   passport.authenticate("google", { failureRedirect: "http://localhost:3000" }),
   (req, res) => {
     // Successful authentication, redirect to frontend
-    res.redirect("http://localhost:3000");
+    res.redirect("http://localhost:3000/auth/callback");
   }
 );
 
